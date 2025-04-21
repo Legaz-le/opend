@@ -3,6 +3,8 @@ import Cycles "mo:base/ExperimentalCycles";
 import List "mo:base/List";
 import HashMap "mo:base/HashMap";
 import Text "mo:base/Text";
+import Nat "mo:base/Nat";
+import Iter "mo:base/Iter";
 import NFTActorClass "../NFT/nft";
 
 actor OpenD {
@@ -52,6 +54,12 @@ actor OpenD {
 
   };
 
+  public query func getListedNFTs() : async [Principal] {
+    let ids = Iter.toArray(mapOfListings.keys());
+    return ids;
+
+  };
+
   public shared(msg) func listItem(id: Principal, price: Nat) : async Text {
      var item : NFTActorClass.NFT = switch (mapOfNFTs.get(id)) {
       case null return "NFT dose not exist.";
@@ -81,5 +89,52 @@ actor OpenD {
     }else {
       return true;
     }
+  };
+
+  public query func getOriginalOwner(id: Principal): async Principal {
+    var listing : Listing = switch (mapOfListings.get(id)){
+      case null return Principal.fromText("");
+      case(?result) result;
+    };
+    return listing.itemOwner;
+  };
+
+  public query func getListedNFTSprice(id:Principal): async Nat {
+    var listing : Listing = switch (mapOfListings.get(id)){
+      case null return 0;
+      case(?result) result;
+    };
+
+    return listing.itemPrice;
+    
+  };
+  
+
+  public shared(msg) func completePurchase(id: Principal, owerId: Principal, newOwnerId: Principal): async Text {
+    var purchashedNFT: NFTActorClass.NFT = switch(mapOfNFTs.get(id)){
+      case null return "NFT dose not exist.";
+      case (?result) result;
+    };
+
+    let transferResult = await purchashedNFT.transferOwnership(newOwnerId);
+    if(transferResult == "Success"){
+      mapOfListings.delete(id);
+      var ownedNFTs : List.List<Principal> = switch(mapOfOwners.get(owerId)){
+        case null List.nil<Principal>();
+        case(?result) result;
+      };
+      ownedNFTs := List.filter(ownedNFTs, func (listItemId: Principal): Bool {
+        return listItemId != id;
+      });
+
+      addToOwnershipMap(newOwner, id);
+      return "Success";
+    }else{
+      return "Error"
+    };
+
+
+    return "Success";
+
   }
 };
