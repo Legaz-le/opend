@@ -62,7 +62,7 @@ actor OpenD {
 
   public shared(msg) func listItem(id: Principal, price: Nat) : async Text {
      var item : NFTActorClass.NFT = switch (mapOfNFTs.get(id)) {
-      case null return "NFT dose not exist.";
+      case null return "NFT does not exist.";
       case (?result) result;
      };
 
@@ -110,16 +110,16 @@ actor OpenD {
   };
   
 
-  public shared(msg) func completePurchase(id: Principal, owerId: Principal, newOwnerId: Principal): async Text {
-    var purchashedNFT: NFTActorClass.NFT = switch(mapOfNFTs.get(id)){
-      case null return "NFT dose not exist.";
-      case (?result) result;
+  public shared(msg) func completePurchase(id: Principal, ownerId: Principal, newOwnerId: Principal): async Text {
+    var purchasedNFT: NFTActorClass.NFT = switch(mapOfNFTs.get(id)){
+      case null return "NFT does not exist";
+      case (?result) result
     };
 
-    let transferResult = await purchashedNFT.transferOwnership(newOwnerId);
+    let transferResult = await purchasedNFT.transferOwnership(newOwnerId);
     if(transferResult == "Success"){
       mapOfListings.delete(id);
-      var ownedNFTs : List.List<Principal> = switch(mapOfOwners.get(owerId)){
+      var ownedNFTs : List.List<Principal> = switch(mapOfOwners.get(ownerId)){
         case null List.nil<Principal>();
         case(?result) result;
       };
@@ -127,7 +127,7 @@ actor OpenD {
         return listItemId != id;
       });
 
-      addToOwnershipMap(newOwner, id);
+      addToOwnershipMap(newOwnerId, id);
       return "Success";
     }else{
       return "Error"
